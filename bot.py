@@ -97,4 +97,25 @@ async def asInfo(ctx, ability='info'):
         except Exception as e:
             print(f'Error: {e}')
 
+@bot.command(name="race", help="Get info about the different races your character can be.")
+async def raceInfo(ctx, raceName="info"):
+    print("COMMAND: raceInfo")
+    diffRaces = ['dragonborn', 'dwarf', 'elf', 'gnome', 'half-elf', 'half-orc', 'halfling', 'human', 'tiefling']
+
+    if raceName.lower() == "info" or raceName.lower() not in diffRaces:
+        await ctx.send(f'**Choose from the following races:**'
+        f'\n> Dragonborn\n> Dwarf\n> Elf\n> Gnome\n> Half-Elf\n> Half-Orc\n> Halfling\n> Human\n> Tiefling')
+    else:
+        raceName = raceName.lower()
+        url = f"http://dnd5e.wikidot.com/lineage:{raceName}"
+        try:
+            response = requests.get(url)
+            html_data = response.text
+            soup = BeautifulSoup(html_data, "html.parser")
+            info = soup.find_all(name="em")
+            result = f'**Race: {raceName.title()}**\n> {info[0].text.strip("<em>/")}\n> *Learn more: {url} *'
+            await ctx.send(result)
+        except Exception as e:
+            print(f'Error: {e}')
+
 bot.run(TOKEN)
