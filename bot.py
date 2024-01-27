@@ -67,4 +67,34 @@ async def classInfo(ctx, className=""):
         except Exception as e:
             print(f"Error: {e}")
 
+
+@bot.command(name="ability", help="Get info about what each abilitiy score means.")
+async def asInfo(ctx, ability='info'):
+    print("COMMAND: ability")
+    abilityConversion = {'cha':'charisma', 'con':'constitution', 'dex':'dexterity', 'int':'intelligence', 'str':'strength', 'wis':'wisdom'}
+
+    if ability.lower() == 'info' or ability.lower() not in abilityConversion:
+        await ctx.send(f'**Understanding Ability Scores**\n'
+        f'\n> **Strength** (str): How hard you can throw a tomato at someone'
+        f'\n> **Dexterity** (dex): How many tomatoes you can dodge'
+        f'\n> **Constitution** (con): How many rotton tomatoes you can eat'
+        f'\n> **Intelligence** (int): Knowing a tomato is a fruit'
+        f'\n> **Wisdom** (wis): Knowing not to put a tomato in a fruit salad'
+        f'\n> **Charisma** (cha): Being able to sell that tomato fruit salad to someone'
+        f'\n\n*Use the command **!ability [ability abbreviation]** to learn more about a specific one.*'
+        f'\n*Example: **!ability wis***')
+    else:
+        try:
+            ability = ability.lower()
+            response = requests.get(f'https://www.dnd5eapi.co/api/ability-scores/{ability}')
+            associatedSkills = [str(s['name']) for s in response.json()["skills"]]
+            if associatedSkills == []:
+                result = f'**Ability: {response.json()["full_name"]}**\n\n> {response.json()["desc"][0]}\n*Associated skills:* None'
+            else:
+                associatedSkills_str = ", ".join([str(s['name']) for s in response.json()["skills"]])
+                result = f'**Ability: {response.json()["full_name"]}**\n\n> {response.json()["desc"][0]}\n*Associated skills:* {associatedSkills_str}'
+            await ctx.send(result)
+        except Exception as e:
+            print(f'Error: {e}')
+
 bot.run(TOKEN)
