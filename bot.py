@@ -10,7 +10,7 @@ load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 
-bot = commands.Bot(command_prefix='!', intents=discord.Intents.all())
+bot = commands.Bot(command_prefix='!', intents=discord.Intents.all(), help_command=None)
 print("running")
 
 
@@ -117,5 +117,22 @@ async def raceInfo(ctx, raceName="info"):
             await ctx.send(result)
         except Exception as e:
             print(f'Error: {e}')
+
+@bot.command(name="help", help="Get information on all of Rollie Pollie's available commands.")
+async def helpInfo(ctx, cmdRequested="help"):
+    print('COMMAND: help')
+    commandDict = {c.name: {"helpinfo":c.help, "params":[p for p in c.clean_params]} for c in bot.commands}
+
+    if cmdRequested == "help" or cmdRequested not in commandDict:
+        result = "**Need some help? Here's a list of all the available commands:**\n"
+        for k,v in commandDict.items():
+            info = f'> __*!{k}*__ --> {v["helpinfo"]} Write it like this: `!{k} {", ".join(v["params"])}`\n'
+            result += info
+        await ctx.send(result)
+
+    else:
+        cmd = cmdRequested.lower()
+        result = f'> __*!{cmd}*__ --> {commandDict[cmd]["helpinfo"]} Write it like this: `!{cmd} {", ".join(commandDict[cmd]["params"])}`\n'
+        await ctx.send(result)
 
 bot.run(TOKEN)
