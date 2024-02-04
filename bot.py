@@ -135,4 +135,30 @@ async def helpInfo(ctx, cmdRequested="help"):
         result = f'> __*!{cmd}*__ --> {commandDict[cmd]["helpinfo"]} Write it like this: `!{cmd} {", ".join(commandDict[cmd]["params"])}`\n'
         await ctx.send(result)
 
+@bot.command(name="role", help="Assign yourself a role from this server.")
+async def assignRole(ctx, roleName="HELP"):
+    listOfRoles = ctx.guild.roles
+    dictOfRoles = dict()
+    listOfRoleNames = list()
+
+    for r in listOfRoles:
+        dictOfRoles[r.name.title()] = [r, r.name, r.id]
+        listOfRoleNames.append(r.name)
+
+    RPB_indx = listOfRoleNames.index("Rollie Pollie Bot")
+    listOfRoleNames = listOfRoleNames[1:RPB_indx]  # keeps only roles that Rollie Pollie Bot can assign
+    listofRoleNames_str = ", ".join([n for n in listOfRoleNames])
+
+    if roleName.title() == "Help" or roleName.title() not in listOfRoleNames:
+        await ctx.send(f'Use `!role [roleName]` to assign yourself a role! The following roles are available to you: {listofRoleNames_str}')
+
+    else:
+        userWants = dictOfRoles[roleName.title()]  # returns list --> [r object, r name, r id]
+        if userWants[0] in ctx.author.roles:  # if the user already has this role
+            await ctx.author.remove_roles(userWants[0])
+            await ctx.send(f"The role {userWants[1]} has been removed because it was already assigned to you. To add it again, repeat the command.")
+        else:
+            await ctx.author.add_roles(userWants[0])
+            await ctx.send(f"The role {userWants[1]} has been assigned to you!")
+
 bot.run(TOKEN)
