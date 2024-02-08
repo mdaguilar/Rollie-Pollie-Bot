@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from discord.ext import commands
+from pprint import pprint
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -55,15 +56,42 @@ async def classInfo(ctx, className=""):
             await ctx.send("**Choose from the following classes**:\n> Artificer\n> Barbarian\n> Bard\n> Cleric\n> Druid\n> Fighter\n> Monk\n> Paladin\n> Ranger\n> Rogue\n> Sorcerer\n> Warlock\n> Wizard")
 
     else:
-        className = className.lower()
-        url = f"http://dnd5e.wikidot.com/{className}"
+        
         try:
+            className = className.lower()
+            # get class description by webscraping
+            url = f"http://dnd5e.wikidot.com/{className}"
             response = requests.get(url)
             html_data = response.text
             soup = BeautifulSoup(html_data, "html.parser")
             info = soup.find_all(name='em')
-            result = f'**Class: {className.title()}**:\n> {info[0].text.strip("<em>/")}\n> *Learn more: {url} *'
-            await ctx.send(result)
+
+            # get class info from API
+            classResponse = requests.get(f'https://www.dnd5eapi.co/api/classes/{className}')
+            classProf = classResponse.json()["proficiencies"][:-2]
+            classSavingThrows = classResponse.json()["saving_throws"]
+            classStartingEquipt = classResponse.json()["starting_equipment"]
+            classStartingEquiptChoices = classResponse.json()["starting_equipment_options"]
+            
+            ## clean up all the class variables for easier use
+            classProf_str = "\n> - " + "\n> - ".join([p["name"] for p in classProf])
+            classSavingThrows_str = "\n> - " + "\n> - ".join([s["name"] for s in classSavingThrows])
+            classStartingEquipt_str = "\n> - " + "\n> - ".join([e["equipment"]["name"] for e in classStartingEquipt])
+            classStartingEquiptChoices_str = "\n> - " + "\n> - ".join([c["desc"] for c in classStartingEquiptChoices])
+
+            # format string and sent out info
+            await ctx.send(f'# Class: {className.title()}'
+                f'\n> {info[0].text.strip("<em>/")}\n> *Learn more: {url}*'
+                f'\n> ## 🧠 Proficiencies'
+                f'\n> *You are proficient in the following types of armor and weapons:* {classProf_str}'
+                f'\n> *You are proficient in the following saving throws:* {classSavingThrows_str}'
+                f'\n> ## ⚔️ Equipment'
+                f'\n> *You start with the following equipment, in addition to the equipment granted by your background:* {classStartingEquipt_str}' 
+                f'\n> *and your choice of:* {classStartingEquiptChoices_str}'
+                f'\n> ## ✨ Spells'
+                f'\n> *Learn more about the spells available to you for this class here: http://dnd5e.wikidot.com/#toc1 *'
+            )
+        
         except Exception as e:
             print(f"Error: {e}")
 
