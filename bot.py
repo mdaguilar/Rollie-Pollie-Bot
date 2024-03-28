@@ -135,14 +135,61 @@ async def raceInfo(ctx, raceName="info"):
         f'\n> Dragonborn\n> Dwarf\n> Elf\n> Gnome\n> Half-Elf\n> Half-Orc\n> Halfling\n> Human\n> Tiefling')
     else:
         raceName = raceName.lower()
-        url = f"http://dnd5e.wikidot.com/lineage:{raceName}"
+        url_wiki = f"http://dnd5e.wikidot.com/lineage:{raceName}"
+        url_api = f'https://www.dnd5eapi.co/api/races/{raceName}'
         try:
-            response = requests.get(url)
-            html_data = response.text
+            response_wiki = requests.get(url_wiki)
+            html_data = response_wiki.text
             soup = BeautifulSoup(html_data, "html.parser")
-            info = soup.find_all(name="em")
-            result = f'**Race: {raceName.title()}**\n> {info[0].text.strip("<em>/")}\n> *Learn more: {url} *'
-            await ctx.send(result)
+            info_wiki = soup.find_all(name="em")
+
+            response_api = requests.get(url_api)
+            starting_stats = [response_api.json()["speed"], response_api.json()["age"], response_api.json()["alignment"], response_api.json()["size_description"], response_api.json()["language_desc"]]
+
+            ability_bonuses = response_api.json()["ability_bonuses"]
+            ability_bonuses_clean = []
+            if ability_bonuses != []:
+                for s in ability_bonuses:
+                    txt = f'{s["ability_score"]["name"]} (+{s["bonus"]})'  # STR (+2)
+                    ability_bonuses_clean.append(txt)
+            else:
+                ability_bonuses_clean.append("None")
+            
+            starting_traits = response_api.json()["traits"]
+            starting_traits_clean = []
+            print(type(starting_traits))
+            if starting_traits != []:
+                for t in starting_traits:
+                    txt = f'{t["name"]}'  # "Darkvision"
+                    starting_traits_clean.append(txt)
+            else:
+                starting_traits_clean.append("None")
+            
+            starting_profs = response_api.json()["starting_proficiencies"] if response_api.json()["starting_proficiencies"] != [] else "None"
+            starting_profs_clean = []
+
+            if starting_profs != "None":
+                for p in starting_profs:
+                    txt = f'{p["name"]}'  # Skill: Perception
+                    starting_profs_clean.append(txt)
+            else:
+                starting_profs_clean.append("None")
+
+            # format string and sent out info
+            await ctx.send(f'# Race: {raceName.title()}'
+                f'\n> {info_wiki[0].text.strip("<em>/")}\n> *Learn more: {url_wiki}*'
+                f'\n> ## 📊 Stats'
+                f'\n> **Speed**: {starting_stats[0]} ft'
+                f'\n> **Age**: {starting_stats[1]}'
+                f'\n> **Alignment**: {starting_stats[2]}'
+                f'\n> **Size**: {starting_stats[3]}'
+                f'\n> **Language**: {starting_stats[4]}'
+                f'\n> **Traits**: {", ".join(starting_traits_clean)}'
+                f'\n> ## 🧠 Proficiencies'
+                f'\n> *You are proficient in the following:* {", ".join(starting_profs_clean)}'
+                f'\n> *As a {raceName.title()}, you can add the following bonuses to your character\'s ability scores:* {", ".join(ability_bonuses_clean)}'
+            )
+
         except Exception as e:
             print(f'Error: {e}')
 
@@ -188,5 +235,6 @@ async def assignRole(ctx, roleName="HELP"):
         else:
             await ctx.author.add_roles(userWants[0])
             await ctx.send(f"The role {userWants[1]} has been assigned to you!")
+
 
 bot.run(TOKEN)
