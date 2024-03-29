@@ -42,7 +42,7 @@ async def roll(ctx, alignmentAbbreviation=""):
 
     try:
         response = requests.get(f"https://www.dnd5eapi.co/api/alignments/{indexConversion[alignmentAbbreviation]}")
-        result = f'**Alignment: {response.json()["name"]}**\n> {response.json()["desc"]}'
+        result = f'## Alignment: {response.json()["name"]}\n> {response.json()["desc"]}'
         await ctx.send(result)
     except Exception as e:
         print(f"Error: {e}")
@@ -117,10 +117,10 @@ async def asInfo(ctx, ability='info'):
             response = requests.get(f'https://www.dnd5eapi.co/api/ability-scores/{ability}')
             associatedSkills = [str(s['name']) for s in response.json()["skills"]]
             if associatedSkills == []:
-                result = f'**Ability: {response.json()["full_name"]}**\n\n> {response.json()["desc"][0]}\n*Associated skills:* None'
+                result = f'## Ability: {response.json()["full_name"]}\n> {response.json()["desc"][0]}\n> ***Associated skills:** None*'
             else:
                 associatedSkills_str = ", ".join([str(s['name']) for s in response.json()["skills"]])
-                result = f'**Ability: {response.json()["full_name"]}**\n\n> {response.json()["desc"][0]}\n*Associated skills:* {associatedSkills_str}'
+                result = f'## Ability: {response.json()["full_name"]}\n> {response.json()["desc"][0]}\n> ***Associated skills:** {associatedSkills_str}*'
             await ctx.send(result)
         except Exception as e:
             print(f'Error: {e}')
